@@ -1,0 +1,419 @@
+select  user_email as email
+  from user_summary_last
+  where  language_id in (2) 
+  and user_email like '%_@_%'
+  and user_type='TEACHER' 
+  and is_deleted=0 
+  and last_action_date >= '2014-01-01';
+  
+  ^^ Spanish Teachers Active as of Jan 1st 2015
+--------------------------------------------------------------------------------------------------------------------------
+
+select  user_email as email
+  from user_summary_last
+  where  language_id in (1,29) 
+  and user_email like '%_@_%'
+  and user_type='TEACHER' 
+  and is_deleted=0 
+  and last_action_date >= '2016-11-07';
+  
+  ^^ Teachers Active as of November 7th
+--------------------------------------------------------------------------------------------------------------------------
+select  user_email as email
+      from user_summary_last
+      where  language_id in (1,29) 
+      and user_email like '%_@_%'
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and creation_date >= '2016-11-07';
+
+  ^^ New Teachers as of October 14th
+--------------------------------------------------------------------------------------------------------------------------
+
+
+select
+user_email as email
+, user_type
+
+, case when upper(left(trim(first_name), 1)) not between 'A' and 'Ä' then '' else initcap(trim(first_name)) end as first_name
+
+from metrics.user_summary_last usl
+
+join zendmodo.profiles p
+  on p.user_id = usl.user_id
+  
+join fatbird.recipients_users ru
+  on ru.user_id = usl.user_id
+
+join fatbird.events e
+  on e.recipient_id = ru.recipient_id
+
+where event_type = 'open'
+and triggered_at > '2014-01-01 00:00:00'
+and language_id in (1, 29)
+and is_deleted = 0
+and admin_rights is not null
+and user_email like '%_@_%'
+
+group by 1,2,3
+
+;
+^^ ALL ADMINS WHO HAVE OPENED AN EMAIL
+--------------------------------------------------------------------------------------------------------------------------
+
+   
+    
+select user_email as email
+from user_summary_last usl
+join fatbird.recipients_users ru on ru.user_id = usl.user_id
+join fatbird.events on events.recipient_id = ru.recipient_id
+where  user_type='STUDENT' and is_deleted=0 and language_id in (1,29) 
+and user_email like '%_@_%'
+and event_type='open' and triggered_at > '2016-01-01 00:00:00'
+group by 1
+;
+
+^^ STUDENTS WHO HAVE OPENED AN EMAIL
+
+ --------------------------------------------------------------------------------------------------------------------------
+
+select count(*) from user_summary_last
+where user_type= 'PARENT'
+-- and is_active_28d=0
+
+^^ COUNTING USERS
+
+--------------------------------------------------------------------------------------------------------------------------
+
+select  user_email as email
+from user_summary_last
+where  language_id in (1, 29) and user_type='TEACHER' and is_deleted=0 and last_action_date > '2016-08-01'
+;
+
+^^active TEACHERS
+As of oct 1.
+
+for inactive just change the > to a <
+
+for spanish teachers the language_id is 2
+
+--------------------------------------------------------------------------------------------------------------------------
+
+select
+user_email as email
+, user_type
+
+, case when upper(left(trim(first_name), 1)) not between 'A' and 'Ä' then '' else initcap(trim(first_name)) end as first_name
+
+from metrics.user_summary_last usl
+
+join zendmodo.profiles p
+  on p.user_id = usl.user_id
+  
+join fatbird.recipients_users ru
+  on ru.user_id = usl.user_id
+
+join fatbird.events e
+  on e.recipient_id = ru.recipient_id
+
+where event_type = 'open'
+and triggered_at > '2014-01-01 00:00:00'
+and language_id in (1, 29)
+and is_deleted = 0
+and admin_rights is not null
+and user_email like '%_@_%'
+
+group by 1,2,3
+
+;
+^^ ALL ADMINS WHO HAVE OPENED AN EMAIL
+--------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+and user_email like '%_@_%'
+^^ exclude non valid emails
+
+
+--------------------------------------------------------------------------------------------------------------------------
+  select distinct email from
+(
+  select  user_email as email
+      from user_summary_last
+      where  language_id in (1,29)
+      and user_email like '%_@_%' 
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and creation_date >= '2016-10-03'
+      
+      
+  union all
+      
+      select  user_email as email
+  from user_summary_last
+  where  language_id in (1,29) 
+  and user_email like '%_@_%'
+  and user_type='TEACHER'
+  and is_deleted=0 
+  and last_action_date >= '2016-10-03' 
+); 
+ 
+
+^^ Active and new teachers combined
+
+--------------------------------------------------------------------------------------------------------------------------
+select  user_email as email
+from metrics.user_summary_last
+where  language_id in (1, 29) and user_type='TEACHER' and is_deleted=0 and last_action_date between '2016-9-26' and '2016-10-10'
+and last_action_date > creation_date
+;
+
+^^ Resurrected T - 14-7
+
+--------------------------------------------------------------------------------------------------------------------------
+
+select  user_email as email
+from metrics.user_summary_last
+where  language_id in (1, 29) and user_type='TEACHER' and is_deleted=0 and last_action_date between '2016-9-12' and '2016-9-26'
+;
+
+^^ Resurrected T - 28 -14
+
+--------------------------------------------------------------------------------------------------------------------------
+
+select  user_email as email
+from metrics.user_summary_last
+where  language_id in (1, 29) and user_type='TEACHER' and is_deleted=0 and last_action_date between '2015-10-10' and '2016-9-12'
+;
+
+^^ Resurrected T - 52W-28days
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+with last_action_user as
+(
+select  
+user_id
+, user_email as email
+from metrics.user_summary_last usl
+where  language_id in (1, 29) and user_type='TEACHER' and is_deleted=0 and last_action_date <= '2015-09-23'
+)
+, open_email_user as
+(
+select 
+distinct ru.user_id
+from fatbird.events e
+left join fatbird.recipients_users ru
+on e.recipient_id = ru.recipient_id
+where event_type = 'open' and triggered_at::date <= '2015-09-23'
+)
+select
+last_action_user.user_id
+, last_action_user.email
+from last_action_user
+join open_email_user
+on last_action_user.user_id = open_email_user.user_id
+
+^^52 Week and Beyond 
+Teachers who speak english and whos last action date is on or before September 23rd 2015
+and who have opened an email on or before September 23rd 2015
+
+--------------------------------------------------------------------------------------------------------------------------
+
+select  user_id , language_id, user_type, is_deleted, creation_date, last_action_date
+from metrics.user_summary
+where summary_date = '2016-11-01' -- whenever you user summary, make sure you specify summary_date
+and user_email like '%_@_%' -- valid email
+and language_id in (1, 29)
+and user_type='PARENT' 
+and is_deleted=0 
+and last_action_date between '2014-09-01' and '2016-11-02' -- they had to do something between those two dates
+-- 10/23/2015 2:01 am     >     10/23/2015 2:00am
+-- 10/23/2015             >     10/23/2015
+and last_action_date::date > creation_date::date -- they had to do something after registering
+;
+
+^^ 
+Parent Email
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+--  ALL PARENTS FOR STUDENTS IN 6TH GRADE OR ABOVE. THE QUERY BELOW GATHERS GRADE INFO ACROSS ALL YEARS 
+--  AND ASSIGNS A GRADE TO STUDENT. IF A STUDENT WAS LAST ACTIVE IN PREVIOUS YEARS THEN IT CALCULATES CURRENT YEAR (2016) 
+--  FOR SUCH STUDENTS
+-- get grade and country for all groups between kindergarden = 2 and higher education = 15
+with groups_country_grade as
+(	
+	select distinct 
+		 date(g.creation_date) creation_date
+		, g.group_id
+		, coalesce(country, ip_country) country_id
+		, case 
+			when start_level_id = 0 then null 
+			when start_level_id <> 0 then start_level_id - 2 
+		end start_grade
+		
+	from 
+		metrics.user_summary_last ul 
+		
+	join zendmodo.groups g on g.creator_id = ul.user_id
+	join zendmodo.groups_info gi on gi.group_id = g.group_id
+	where 1=1
+		and ul.user_type = 'TEACHER'
+		and start_level_id between 1 and 15
+),
+-- get grade and country for all students who belong to groups above
+-- first, find frequency of grades in a given year. get the highest frequency of grade in a year and assign that grade for the year. 
+-- second, get the max year to get the most current grade student was active on edmodo
+-- third (in targeted students query), if the most current year is prior to 2016 then calculate student's grade based on their last activity on edmodo
+students_country_grade as
+(
+	select user_id, school_year, max(current_grade) grade
+	from (
+	select distinct 
+		country_id, user_id, school_year, case when c = max(c) over (partition by country_id, user_id, school_year) then start_grade end schoolyear_grade,
+		case when school_year = max(school_year) over (partition by country_id, user_id) then start_grade end current_grade
+		from 
+		(select 
+			extract(year from t.creation_Date) school_year,
+			t.*, 
+			ug.user_id,
+			count(*) over (partition by country_id, ug.user_id, school_year, start_grade ) c
+		
+			from 
+				groups_country_grade t
+		
+			join zendmodo.users_groups ug on ug.group_id = t.group_id
+			join zendmodo.users u on u.user_id = ug.user_id and type = 'STUDENT'
+		
+			where 1=1
+			--and ug.user_id in (24429542,42932381,78061585, 51173141, 77812547) 
+		
+		) order by user_id, school_year
+	) where current_grade is not null
+	group by 1,2
+), 
+-- targeted students who are between grades 6 and higher education
+targeted_students as 
+(
+	select * from (
+	select *, 
+		case 
+			when school_year = 2016 then grade
+			else (2016 - school_year) + grade
+		end current_grade
+	
+	 from students_country_grade
+	 
+	where 1=1
+	
+	) where 1=1
+	and current_grade between -1 and 8  and current_grade is null --(elemntary,middle,nulls)
+	-- and current_grade between >= 9 --(high school)
+)
+-- join parents info for targeted students
+select distinct 
+	parent_id
+from zendmodo.parents_students ps 
+join targeted_students ts on ts.user_id = ps.student_id 
+join metrics.user_summary_last usl on usl.user_id = ps.parent_id
+;
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  select  user_email as email
+  ,coalesce(s.state, usl.ip_region) as state
+  ,s.state
+  ,usl.ip_region
+
+       --if they have a school then get the school, ohter wise get IP state
+      from user_summary_last usl
+      left join zendmodo.schools s on s.school_id = usl.school_id
+      where  language_id in (1,29)
+      and user_email like '%_@_%' 
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and coalesce(usl.country_id, usl.ip_country) = 'US'
+      and coalesce (s.state, usl.ip_region) = 'FL'
+	and last_action_date >= '2016-06-03' 
+      
+;
+
+
+
+-------^^^ Teachers from florida who have been active on Edmodo at least once in the last six months---
+
+	
+	 select  user_email as email
+  ,coalesce(s.state, usl.ip_region) as state
+  ,s.state
+  ,usl.ip_region
+
+       --if they have a school then get the school, ohter wise get IP state
+      from metrics.user_summary_last usl
+      left join zendmodo.schools s on s.school_id = usl.school_id
+      where  language_id in (1,29)
+      and user_email like '%_@_%' 
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and coalesce(usl.country, usl.ip_country) = 'US'
+      and coalesce (s.state, usl.ip_region) in ('FL','MD','GA','NC','SC','MD','VA','MA','NJ')
+	and last_action_date >= '2016-06-03' 
+      
+;
+
+
+----------------
+
+
+	 select  user_email as email
+  ,coalesce(s.state, usl.ip_region) as state
+  ,s.state
+  ,usl.ip_region
+
+       --if they have a school then get the school, ohter wise get IP state
+      from metrics.user_summary_last usl
+      left join zendmodo.schools s on s.school_id = usl.school_id
+      where  language_id in (1,29)
+      and user_email like '%_@_%' 
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and coalesce(usl.country, usl.ip_country) = 'US'
+      and coalesce (s.state, usl.ip_region) in ('FL','MD','NY','GA','NC','SC','MD','VA','MA','NJ')
+	and last_action_date >= '2016-06-03' 
+      
+;
+
+-----South East States FETC--------------------
+
+ select  user_email as email
+  ,coalesce(s.state, usl.ip_region) as state
+  ,s.state
+  ,usl.ip_region
+
+       --if they have a school then get the school, ohter wise get IP state
+      from metrics.user_summary_last usl
+      left join zendmodo.schools s on s.school_id = usl.school_id
+      where  language_id in (1,29)
+      and user_email like '%_@_%' 
+      and user_type='TEACHER' 
+      and is_deleted=0 
+      and coalesce(usl.country, usl.ip_country) = 'US'
+      and coalesce (s.state, usl.ip_region) in ('TX','NM','AZ','OK','AR','LA','MS','KS','AL','TN' )
+	and last_action_date >= '2016-06-03' 
+      
+;
+
+-----Southern States--------------------
+
+
+
+
+
+
+
