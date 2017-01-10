@@ -6,7 +6,7 @@ select  user_email as email
   and is_deleted=0 
   and last_action_date >= '2014-01-01';
   
-  ^^ Spanish Teachers Active as of Jan 1st 2015
+  ^^ Spanish Teachers Active as of Jan 1st 2014
 --------------------------------------------------------------------------------------------------------------------------
 
 select  user_email as email
@@ -409,7 +409,8 @@ join metrics.user_summary_last usl on usl.user_id = ps.parent_id
       
 ;
 
------Southern States--------------------
+----^^^Southern States
+-------------------------------------------------------
 
 
 
